@@ -30,6 +30,8 @@
 		1609A6BB1B7DAACE006D6522 /* Ui_3 in Resources */ = {isa = PBXBuildFile; fileRef = 1609A6A71B7DAACE006D6522 /* Ui_3 */; };
 		1609A6BC1B7DAACE006D6522 /* wheat.png in Resources */ = {isa = PBXBuildFile; fileRef = 1609A6A81B7DAACE006D6522 /* wheat.png */; };
 		163343C91B7CAA8100F47E5D /* GameScene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 163343C71B7CAA8100F47E5D /* GameScene.cpp */; };
+		16918D6D1B82CBD700E93858 /* SeedChooseLayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 16918D6B1B82CBD700E93858 /* SeedChooseLayer.cpp */; };
+		16918D701B82D17800E93858 /* TimingLayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 16918D6E1B82D17800E93858 /* TimingLayer.cpp */; };
 		1AC6FB21180E996B004C840B /* libcocos2d Mac.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1AC6FAF9180E9839004C840B /* libcocos2d Mac.a */; };
 		1AC6FB30180E99EB004C840B /* libcocos2d iOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1AC6FB07180E9839004C840B /* libcocos2d iOS.a */; };
 		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
@@ -145,6 +147,10 @@
 		1609A6A81B7DAACE006D6522 /* wheat.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wheat.png; path = "../../../../../Downloads/SLG-master/resources/H_864/wheat.png"; sourceTree = "<group>"; };
 		163343C71B7CAA8100F47E5D /* GameScene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GameScene.cpp; sourceTree = "<group>"; };
 		163343C81B7CAA8100F47E5D /* GameScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GameScene.h; sourceTree = "<group>"; };
+		16918D6B1B82CBD700E93858 /* SeedChooseLayer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SeedChooseLayer.cpp; sourceTree = "<group>"; };
+		16918D6C1B82CBD700E93858 /* SeedChooseLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SeedChooseLayer.h; sourceTree = "<group>"; };
+		16918D6E1B82D17800E93858 /* TimingLayer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TimingLayer.cpp; sourceTree = "<group>"; };
+		16918D6F1B82D17800E93858 /* TimingLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimingLayer.h; sourceTree = "<group>"; };
 		1AC6FAE5180E9839004C840B /* cocos2d_libs.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = cocos2d_libs.xcodeproj; path = ../cocos2d/build/cocos2d_libs.xcodeproj; sourceTree = "<group>"; };
 		1ACB3243164770DE00914215 /* libcurl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcurl.a; path = ../../cocos2dx/platform/third_party/ios/libraries/libcurl.a; sourceTree = "<group>"; };
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -356,6 +362,10 @@
 				46880B8519C43A87006E1F66 /* AppDelegate.h */,
 				163343C71B7CAA8100F47E5D /* GameScene.cpp */,
 				163343C81B7CAA8100F47E5D /* GameScene.h */,
+				16918D6B1B82CBD700E93858 /* SeedChooseLayer.cpp */,
+				16918D6C1B82CBD700E93858 /* SeedChooseLayer.h */,
+				16918D6E1B82D17800E93858 /* TimingLayer.cpp */,
+				16918D6F1B82D17800E93858 /* TimingLayer.h */,
 			);
 			name = Classes;
 			path = ../Classes;
@@ -579,6 +589,8 @@
 				46880B8819C43A87006E1F66 /* AppDelegate.cpp in Sources */,
 				503AE10017EB989F00D1A890 /* AppController.mm in Sources */,
 				503AE10217EB989F00D1A890 /* RootViewController.mm in Sources */,
+				16918D701B82D17800E93858 /* TimingLayer.cpp in Sources */,
+				16918D6D1B82CBD700E93858 /* SeedChooseLayer.cpp in Sources */,
 				163343C91B7CAA8100F47E5D /* GameScene.cpp in Sources */,
 				503AE10117EB989F00D1A890 /* main.m in Sources */,
 			);

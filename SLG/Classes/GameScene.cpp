@@ -114,9 +114,11 @@ bool GameScene::init()
     //绑定触摸事件
     listener->onTouchesBegan = CC_CALLBACK_2(GameScene::onTouchesBegan, this);
     listener->onTouchesMoved = CC_CALLBACK_2(GameScene::onTouchesMoved, this);
+    listener->onTouchesEnded = CC_CALLBACK_2(GameScene::onTouchesEnded, this);
     //添加监听器
     _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, bgSprite);
     initUI();
+    scheduleUpdate();
     
     return true;
 }
@@ -150,7 +152,6 @@ void GameScene::initUI()
         TextField* money = static_cast<TextField*>(shop_layout->getChildByName("money_image")->getChildByName("money"));
         money->setText(std::to_string(shop_money[i]));
     }
-    
 }
 
 void GameScene::menuShopCallback(cocos2d::Ref *pSender, Widget::TouchEventType type)
@@ -217,9 +218,9 @@ void GameScene::SpriteCallback(cocos2d::Ref *pSender, Widget::TouchEventType typ
                 pos.x = (widget->getTouchMovePosition().x - bgOrigin.x)/bgSprite->getScale();
                 pos.y = (widget->getTouchMovePosition().y - bgOrigin.y)/bgSprite->getScale();
                 
-                buyTarget->setPosition(pos);
+                //buyTarget->setPosition(pos);
                 //检测是否可以创建商品
-                //moveCheck(pos, tag-SHOP_ITEM_LAYOUT_TAG);
+                moveCheck(pos, tag-SHOP_ITEM_LAYOUT_TAG);
             }
             break;
             
@@ -227,6 +228,7 @@ void GameScene::SpriteCallback(cocos2d::Ref *pSender, Widget::TouchEventType typ
         case Widget::TouchEventType::ENDED:
             //还原放大的widget
             widget->runAction(EaseElasticInOut::create(ScaleTo::create(0.1f, 1), 0.2f));
+            
             //移除buyTarget
             if(buyTarget!=NULL)
             {
@@ -242,9 +244,23 @@ void GameScene::SpriteCallback(cocos2d::Ref *pSender, Widget::TouchEventType typ
             if (canBuild == true) {
                 //得到放手的位置
                 auto endPos = Vec2((widget->getTouchEndPosition().x - bgOrigin.x)/bgSprite->getScale(),(widget->getTouchEndPosition().y - bgOrigin.y)/bgSprite->getScale());
-                map->getLayer("2")->setTileGID(9 + tag - SHOP_ITEM_LAYOUT_TAG, convertTotileCoord(endPos));
+                map->getLayer("goodsLayer")->setTileGID(9 + tag - SHOP_ITEM_LAYOUT_TAG, convertTotileCoord(endPos));
                 canBuild = false;
             }
+            else{
+                // 得到放手时鼠标/手指的屏幕坐标，这个坐标是相对于地图的。所以计算它时应该要考虑到地图的移动和缩放。
+                auto endPos =Vec2((widget->getTouchEndPosition().x - bgOrigin.x)/bgSprite->getScale(), (widget->getTouchEndPosition().y - bgOrigin.y)/bgSprite->getScale());
+                // 把上面得到的屏幕坐标转换围地图坐标
+                auto coord = convertTotileCoord( endPos);
+                // 再把地图坐标转换为固定的一些屏幕坐标
+                auto screenPos = this->convertToScreenCoord(coord);
+                // 创建提醒项，把它设置在screenPos处
+                auto tips = Sprite::create("tip.png");
+                tips->setPosition(screenPos);
+                bgSprite->addChild(tips);
+                // 让提醒项出现一段时间后移除它
+                tips->runAction(Sequence::create(DelayTime::create(1.0f),                                                CallFunc::create(CC_CALLBACK_0(Sprite::removeFromParent, tips)),                                                NULL));
+                }
             //移除buyTarget
             if(buyTarget != NULL)
             {
@@ -267,15 +283,62 @@ void GameScene::SpriteCallback(cocos2d::Ref *pSender, Widget::TouchEventType typ
 void GameScene::onTouchesBegan(const std::vector<Touch *> &touches, Event *event)
 {
     Size winSize = Director::getInstance()->getWinSize();
+    auto seedPanel = this->getChildByTag(SEEDPANEL_TAG);
+    if (seedPanel) {
+        this->removeChild(seedPanel);
+    }
     if (comeOut == true) {
         panel_shop->runAction(EaseElasticInOut::create(MoveBy::create(1, Vec2(-panel_shop->getContentSize().width/3*2, 0)), 0.5f));
         shop_btn->runAction(EaseElasticInOut::create(MoveBy::create(1, Vec2(-panel_shop->getContentSize().width/3*2, 0)), 0.5f));
         comeOut = false;
     }
+    if(touches.size() == 1)
+    {
+        auto touch = touches[0];
+        auto screenPos = touch->getLocation();
+        auto mapSize = map->getMapSize();
+        Vec2 pos;
+        pos.x = (screenPos.x - bgOrigin.x) / bgSprite->getScale();
+        pos.y = (screenPos.y - bgOrigin.y) / bgSprite->getScale();
+        auto tilePos = this->convertTotileCoord(pos);
+        if(tilePos.x >= 0 && tilePos.x <= mapSize.width-1 && tilePos.y >= 0 && tilePos.y <= mapSize.height-1)
+        {
+            int gid = map->getLayer("goodsLayer")->getTileGIDAt(tilePos);
+            if (gid != 0) {
+                switch (gid) {
+                    case 9:
+                        tileType = TileType::GROUD;
+                        break;
+                    case 18:
+                    case 20:
+                    case 22:
+                        tileType = TileType::GROUD_CROP;
+                        break;
+                    case 19:
+                    case 21:
+                    case 23:
+                        tileType = TileType::CROP_HARVEST;
+                        break;
+                    default:
+                        tileType = TileType::OTHER;
+                        break;
+                }
+                touchObjectPos = tilePos;
+                map->getLayer("tipsLayer")->setTileGID(17, tilePos);
+                this->schedule(schedule_selector(GameScene::updatePress),2);
+                press = true;
+            }
+        }
+    }
 }
+
 void GameScene::onTouchesMoved(const std::vector<Touch *> &touches, Event *event)
 {
     auto winSize = Director::getInstance()->getWinSize();
+    press = false;
+    map->getLayer("tipsLayer")->removeTileAt(touchObjectPos);
+    this->unschedule(schedule_selector(GameScene::updatePress));
+    
     if(touches.size() > 1)         //多点触摸
     {
         //得到当前两触摸点
@@ -361,16 +424,141 @@ void GameScene::onTouchesMoved(const std::vector<Touch *> &touches, Event *event
     }
 }
 
+void GameScene::onTouchesEnded(const std::vector<Touch *> &touches, Event *event)
+{
+    this->unschedule(schedule_selector(GameScene::updatePress));
+    
+    Size winSize = Director::getInstance()->getWinSize();
+    if (touches.size() == 1) {
+        auto touch = touches[0];
+        auto screenPos = touch->getLocation();
+        if (press) {
+            log("是短按");
+            if (tileType == GROUD) {
+                auto panel = SeedChooseLayer::create();
+                panel->setPosition(screenPos);
+                this->addChild(panel, 10, SEEDPANEL_TAG);
+            }
+            
+            
+            map->getLayer("tipsLayer")->removeTileAt(touchObjectPos);
+            press = false;
+        }
+    }
+}
+
 Vec2 GameScene::convertTotileCoord(Vec2 position)
 {
     auto mapSize = map->getMapSize();
     //计算当前缩放下，每块瓦片的长宽
+    auto BBoxSize = map->getBoundingBox().size;
     auto tileWidth = map->getBoundingBox().size.width / map->getMapSize().width;
-    auto tileHeight = map->getBoundingBox().size.width / map->getMapSize().width;
+    auto tileHeight = map->getBoundingBox().size.height / map->getMapSize().height;
     //把position转换为瓦片坐标，确保得到的是整数
     //int posx = mapSize.height - position.y / tileHeight;
     int posx = mapSize.height - position.y / tileHeight + position.x / tileWidth - mapSize.width / 2;
     int posy = mapSize.height - position.y / tileHeight - position.x / tileWidth + mapSize.width / 2;
     
     return Point(posx, posy);
+}
+
+Vec2 GameScene::convertToScreenCoord(Vec2 position)
+{
+    auto mapSize = map->getMapSize();
+    auto tileSize = map->getTileSize();
+    auto BBoxSize = map->getBoundingBox().size;
+    auto tileWidth = map->getBoundingBox().size.width / map->getMapSize().width;
+    auto tileHeight = map->getBoundingBox().size.height / map->getMapSize().height;
+
+    auto variable1 = (position.x + mapSize.width / 2 - mapSize.height) * tileHeight * tileWidth;
+    auto variable2 = (-position.y + mapSize.width / 2 + mapSize.height) * tileWidth * tileHeight;
+    
+    int posx = (variable1 + variable2) / 2 / tileHeight;
+    int posy = (variable2 - variable1) / 2 / tileWidth;
+    
+    return Point(posx, posy);
+}
+
+void GameScene::moveCheck(Vec2 position, int tag)
+{
+    auto mapSize = map->getMapSize();
+    //将position转化为地图坐标
+    auto tilePos = this->convertTotileCoord(position);
+    
+    //canBuild是用于判断是否可以生成瓦片的变量
+    canBuild = false;
+    perPos = currPos;
+    
+    //约束tilePos的范围，如果tilePos在正确地取值范围内
+    if (tilePos.x >= 0 && tilePos.x <= mapSize.width - 1 && tilePos.y >=0 && tilePos.y <= mapSize.height - 1)
+    {
+        //前半段map->getLayer("2")是取得地图中名称为“2”的图层，而getTileGIDAt(tilePos)则是得到tilePos坐标上瓦片的GID标识（GID标识为0时，表示该处没有任何瓦片
+        currPos = tilePos;
+        int gid = map->getLayer("goodsLayer")->getTileGIDAt(tilePos);
+        //该处没有其他障碍瓦片时
+        if(gid == 0)
+        {
+            //设置拖动过程中正常的buyTarget纹理
+            buyTarget->setTexture(move_textures[tag]);
+            canBuild =true;
+        }
+        else{
+            buyTarget->setTexture(move_textures_en[tag]);
+            canBuild = false;
+        }
+        auto screenPos = this->convertToScreenCoord(tilePos);
+        buyTarget->setPosition(screenPos);
+        if(perPos != currPos)
+        {
+            map->getLayer("tipsLayer")->removeTileAt(perPos);
+            map->getLayer("tipsLayer")->setTileGID(17, currPos);
+        }
+    }
+    //如果地图外（四个角）
+    else
+    {
+        buyTarget->setPosition(position);
+        buyTarget->setTexture(move_textures_en[tag]);
+        map->getLayer("tipsLayer")->removeTileAt(perPos);
+        canBuild = false;
+    }
+}
+
+void GameScene::updatePress(float t)
+{
+    this->unschedule(schedule_selector(GameScene::updatePress));
+    if (press) {
+        log("是长按");
+        map->getLayer("tipsLayer")->removeTileAt(touchObjectPos);
+        press = false;
+    }
+}
+
+void GameScene::update(float dt)
+{
+    //通过标示得到场景中的子节点
+    auto seedPanel = this->getChildByTag(SEEDPANEL_TAG);
+    //判断瓦片是否为空土块，并且是否已经创建好了播种界面
+    if (tileType == GROUD && seedPanel != NULL)
+    {
+        //得到选择的农作物类型
+        auto type = ((SeedChooseLayer*)seedPanel)->getCurrType();
+        //根据农作物类型种植相应的农作物
+        switch (type) {
+            case WHEAT:
+                map->getLayer("goodsLayer")->setTileGID(18, touchObjectPos);
+                this->removeChild(seedPanel);
+                break;
+            case CORN:
+                map->getLayer("goodsLayer")->setTileGID(20, touchObjectPos);
+                this->removeChild(seedPanel);
+                break;
+            case CARROT:
+                map->getLayer("goodsLayer")->setTileGID(22, touchObjectPos);
+                this->removeChild(seedPanel);
+                break;
+            default:
+                break;
+        }
+    }
 }
